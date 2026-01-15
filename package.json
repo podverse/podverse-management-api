@@ -1,0 +1,71 @@
+{
+  "name": "podverse-management-api",
+  "version": "1.0.0",
+  "description": "Management API for Podverse administration.",
+  "private": true,
+  "main": "./src/index.js",
+  "repository": "https://github.com/podverse/podverse-management-api.git",
+  "homepage": "https://github.com/podverse/podverse-management-api#readme",
+  "author": "Mitch Downey <mitch@podverse.fm>",
+  "contributors": [
+    "Mitch Downey"
+  ],
+  "scripts": {
+    "build:dev": "tsc",
+    "build:prod": "tsc -p tsconfig.prod.json",
+    "dev": "tsc && node ./dist/index.js",
+    "dev:watch": "tsc --watch & nodemon --delay 500ms --watch $(realpath node_modules/podverse-helpers) --watch $(realpath node_modules/podverse-orm) --watch dist dist/index.js",
+    "dev:inspect": "tsc && node --inspect ./dist/index.js",
+    "dev:inspect:watch": "tsc --watch & nodemon --inspect --delay 500ms --watch $(realpath node_modules/podverse-helpers) --watch $(realpath node_modules/podverse-orm) --watch dist dist/index.js",
+    "lint": "eslint 'src/**/*.{ts,js}'",
+    "start": "ts-node ./dist/index.js"
+  },
+  "license": "AGPLv3",
+  "keywords": [
+    "podverse",
+    "management",
+    "admin",
+    "api"
+  ],
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "joi": "^18.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
+    "nanoid": "^5.1.6",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "pg": "^8.16.3",
+    "podverse-helpers": "^5.1.12",
+    "podverse-orm": "^5.1.12",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.26",
+    "typeorm-naming-strategies": "^4.1.0"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "^1.49.0",
+    "@eslint/config-array": "^0.21.0",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.35.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.5.0",
+    "@types/passport": "^1.0.17",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/passport-local": "^1.0.38",
+    "eslint": "^9.35.0",
+    "globals": "^16.4.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.0"
+  }
+}
