@@ -1,6 +1,6 @@
 {
   "name": "podverse-management-api",
-  "version": "1.0.0",
+  "version": "5.1.25",
   "description": "Management API for Podverse administration.",
   "private": true,
   "main": "./src/index.js",
