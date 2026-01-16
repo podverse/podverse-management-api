@@ -63,9 +63,10 @@ export class AdminAccountService {
     const adminAccount = this.repositoryReadWrite.create();
     const savedAccount = await this.repositoryReadWrite.save(adminAccount);
 
-    // Hash the password
+    // Hash the password using bcrypt with saltRounds=10 and genSalt (matching podverse-orm pattern)
     const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(dto.password, saltRounds);
+    const salt = await bcrypt.genSalt(saltRounds);
+    const hashedPassword = await bcrypt.hash(dto.password, salt);
 
     // Create the credentials
     const credentials = this.credentialsRepositoryReadWrite.create({

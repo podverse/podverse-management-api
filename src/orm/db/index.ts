@@ -3,6 +3,7 @@ import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 import { config } from "@mgmt-api/config";
 import { AdminAccount } from "@mgmt-api/orm/entities/adminAccount";
 import { AdminAccountCredentials } from "@mgmt-api/orm/entities/adminAccountCredentials";
+import { AdminAccountRole } from "@mgmt-api/orm/entities/adminAccountRole";
 
 const commonConfig: DataSourceOptions = {
   type: "postgres",
@@ -15,6 +16,7 @@ const commonConfig: DataSourceOptions = {
   entities: [
     AdminAccount,
     AdminAccountCredentials,
+    AdminAccountRole,
   ],
   migrations: [],
   subscribers: [],
