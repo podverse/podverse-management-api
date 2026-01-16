@@ -1,5 +1,5 @@
 import express from 'express';
-// import { ensureAuthenticated } from '@mgmt-api/lib/auth';
+import { ensureAuthenticated } from '@mgmt-api/lib/auth';
 import { config } from '@mgmt-api/config';
 import { AdminAccountService } from '@mgmt-api/orm/services/adminAccount';
 import { getParamRequired } from '@mgmt-api/lib/params';
@@ -8,7 +8,7 @@ const router = express.Router();
 const baseUrl = `${config.api.prefix}${config.api.version}`;
 
 // Get admin account by id
-router.get(`${baseUrl}/admin-account/:id`, /* ensureAuthenticated, */ async (req, res) => {
+router.get(`${baseUrl}/admin-account/:id`, ensureAuthenticated, async (req, res) => {
   try {
     const adminAccountService = new AdminAccountService();
     const idParam = getParamRequired(req, 'id');
