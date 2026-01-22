@@ -1,4 +1,4 @@
-import { isValidUUID } from 'podverse-helpers';
+import { isValidUUID, ValidationResult, ValidationSummary, validateRequired, validateOptional } from 'podverse-helpers';
 
 /**
  * Validates critical environment variables and configuration at application startup.
@@ -10,81 +10,216 @@ import { isValidUUID } from 'podverse-helpers';
 export const validateStartupRequirements = (): void => {
   console.log('Running startup validation...');
 
-  try {
-    validateJwtSecret();
-    validateUserAgent();
-    // Add additional startup validations here as needed
-    // Example: validateDatabaseConfig(), validateSMTPConfig(), etc.
-
-    console.log('Startup validation completed successfully');
-  } catch (error) {
-    console.error('Startup validation failed:', error);
-    throw error; // Re-throw to prevent application startup
+  const summary = validateAllEnvironmentVariables();
+  displayValidationResults(summary);
+  
+  if (summary.requiredMissing > 0) {
+    const errorMessage = `FATAL: ${summary.requiredMissing} required environment variable(s) are missing or invalid. Please check the validation output above for details.`;
+    console.error(errorMessage);
+    // Throw error - stack trace will be suppressed in index.ts for validation errors
+    throw new Error(errorMessage);
   }
+
+  console.log('Startup validation completed successfully');
+};
+
+/**
+ * Validates all environment variables and returns a comprehensive summary
+ */
+const validateAllEnvironmentVariables = (): ValidationSummary => {
+  const results: ValidationResult[] = [];
+  
+  // Auth & Security
+  results.push(validateJwtSecret());
+  results.push(validateUserAgent());
+
+  // Database
+  results.push(validateRequired('DB_HOST', 'Database'));
+  results.push(validateRequired('DB_PORT', 'Database'));
+  results.push(validateRequired('DB_READ_USERNAME', 'Database'));
+  results.push(validateRequired('DB_READ_PASSWORD', 'Database'));
+  results.push(validateRequired('DB_READ_WRITE_USERNAME', 'Database'));
+  results.push(validateRequired('DB_READ_WRITE_PASSWORD', 'Database'));
+  results.push(validateRequired('DB_DATABASE', 'Database'));
+  results.push(validateOptional('DB_SSL_CONNECTION', 'Database'));
+
+  // API Configuration
+  results.push(validateRequired('API_PORT', 'API'));
+  results.push(validateRequired('API_PREFIX', 'API'));
+  results.push(validateRequired('API_VERSION', 'API'));
+  results.push(validateRequired('COOKIE_DOMAIN', 'API'));
+  results.push(validateRequired('API_ALLOWED_CORS_ORIGINS', 'API'));
+
+  // Web
+  results.push(validateRequired('WEB_PROTOCOL', 'Web'));
+  results.push(validateRequired('WEB_DOMAIN', 'Web'));
+
+  // General
+  results.push(validateOptional('NODE_ENV', 'General'));
+  results.push(validateOptional('LOG_LEVEL', 'General'));
+
+  // Calculate summary
+  const total = results.length;
+  const passed = results.filter(r => r.isValid && r.isSet).length;
+  const failed = results.filter(r => !r.isValid).length;
+  const requiredMissing = results.filter(r => r.isRequired && !r.isValid).length;
+  const skipped = results.filter(r => !r.isRequired && !r.isSet).length;
+
+  return {
+    total,
+    passed,
+    failed,
+    requiredMissing,
+    skipped,
+    results
+  };
 };
 
 /**
  * Validates the AUTH_JWT_SECRET environment variable.
  * The JWT secret MUST be a valid UUID to ensure secure token generation.
- * 
- * @throws Error if AUTH_JWT_SECRET is missing or not a valid UUID
  */
-const validateJwtSecret = (): void => {
+const validateJwtSecret = (): ValidationResult => {
   const jwtSecret = process.env.AUTH_JWT_SECRET || '';
 
   if (!jwtSecret) {
-    throw new Error(
-      'FATAL: AUTH_JWT_SECRET environment variable is required but not set.\n' +
-      'Please set AUTH_JWT_SECRET to a valid UUID (e.g., 123e4567-e89b-12d3-a456-426614174000).'
-    );
+    return {
+      name: 'AUTH_JWT_SECRET',
+      isSet: false,
+      isValid: false,
+      isRequired: true,
+      message: 'Missing - must be a valid UUID',
+      category: 'Auth & Security'
+    };
   }
 
   if (!isValidUUID(jwtSecret)) {
-    throw new Error(
-      `FATAL: AUTH_JWT_SECRET must be a valid UUID.\n` +
-      `Current value "${jwtSecret}" is not a valid UUID.\n` +
-      `Please generate a valid UUID (e.g., using 'uuidgen' command or https://www.uuidgenerator.net/).\n` +
-      `Example format: 123e4567-e89b-12d3-a456-426614174000`
-    );
+    return {
+      name: 'AUTH_JWT_SECRET',
+      isSet: true,
+      isValid: false,
+      isRequired: true,
+      message: `Invalid UUID format: "${jwtSecret}"`,
+      category: 'Auth & Security'
+    };
   }
+
+  return {
+    name: 'AUTH_JWT_SECRET',
+    isSet: true,
+    isValid: true,
+    isRequired: true,
+    message: 'Valid UUID',
+    category: 'Auth & Security'
+  };
 };
 
 /**
  * Validates the USER_AGENT environment variable.
  * The User-Agent MUST follow the format: BrandName Environment/AppName/Version
  * Example: "Podverse Bot Local/Management-API/5"
- * 
- * @throws Error if USER_AGENT is missing or not in the correct format
  */
-const validateUserAgent = (): void => {
+const validateUserAgent = (): ValidationResult => {
   const userAgent = process.env.USER_AGENT || '';
   const USER_AGENT_PATTERN = /^[^/]+\/[^/]+\/[^/]+$/;
 
   if (!userAgent) {
-    throw new Error(
-      'FATAL: USER_AGENT environment variable is required but not set.\n' +
-      'Please set USER_AGENT to a valid format (e.g., Podverse Bot Local/Management-API/5).'
-    );
+    return {
+      name: 'USER_AGENT',
+      isSet: false,
+      isValid: false,
+      isRequired: true,
+      message: 'Missing - must follow format: BrandName Bot Environment/AppName/Version',
+      category: 'Auth & Security'
+    };
   }
 
   const trimmedUserAgent = userAgent.trim();
   
   if (!USER_AGENT_PATTERN.test(trimmedUserAgent)) {
-    throw new Error(
-      `FATAL: USER_AGENT must follow the format: BrandName Bot Environment/AppName/Version\n` +
-      `Current value "${userAgent}" is not in the correct format.\n` +
-      `Example format: Podverse Bot Local/Management-API/5`
-    );
+    return {
+      name: 'USER_AGENT',
+      isSet: true,
+      isValid: false,
+      isRequired: true,
+      message: `Invalid format: "${userAgent}" - must follow format: BrandName Bot Environment/AppName/Version`,
+      category: 'Auth & Security'
+    };
   }
 
   // Check that "Bot" is included in the first part (before the first slash)
   const parts = trimmedUserAgent.split('/');
   if (parts.length > 0 && !parts[0].includes('Bot')) {
-    throw new Error(
-      `FATAL: USER_AGENT first part must include "Bot".\n` +
-      `Current value "${userAgent}" does not include "Bot" in the first part.\n` +
-      `Expected format: BrandName Bot Environment/AppName/Version\n` +
-      `Example: Podverse Bot Local/Management-API/5`
-    );
+    return {
+      name: 'USER_AGENT',
+      isSet: true,
+      isValid: false,
+      isRequired: true,
+      message: `Missing "Bot" in first part: "${userAgent}"`,
+      category: 'Auth & Security'
+    };
+  }
+
+  return {
+    name: 'USER_AGENT',
+    isSet: true,
+    isValid: true,
+    isRequired: true,
+    message: 'Valid format',
+    category: 'Auth & Security'
+  };
+};
+
+/**
+ * Displays validation results in a formatted table
+ */
+const displayValidationResults = (summary: ValidationSummary): void => {
+  console.log('=== Environment Variable Validation ===');
+  
+  // Group results by category
+  const byCategory = summary.results.reduce((acc, result) => {
+    if (!acc[result.category]) {
+      acc[result.category] = [];
+    }
+    acc[result.category].push(result);
+    return acc;
+  }, {} as Record<string, ValidationResult[]>);
+
+  // Display by category
+  const categories = Object.keys(byCategory).sort();
+  for (const category of categories) {
+    console.log(`[${category}]`);
+    for (const result of byCategory[category]) {
+      const status = result.isValid ? '✓' : '✗';
+      const requiredText = result.isRequired ? '' : ' (optional)';
+      const logMessage = `  ${status} ${result.name}${requiredText} - ${result.message}`;
+      // Log failures as errors, skipped optional vars as warn, passes as info
+      if (!result.isValid) {
+        console.error(logMessage);
+      } else if (!result.isSet && !result.isRequired) {
+        console.warn(logMessage);
+      } else {
+        console.log(logMessage);
+      }
+    }
+  }
+
+  // Display summary
+  console.log('=== Validation Summary ===');
+  console.log(`Total: ${summary.total}`);
+  console.log(`Passed: ${summary.passed}`);
+  if (summary.skipped > 0) {
+    console.warn(`Skipped: ${summary.skipped}`);
+  }
+  console.log(`Failed: ${summary.failed}`);
+  console.log(`Required Missing: ${summary.requiredMissing}`);
+  
+  if (summary.requiredMissing > 0) {
+    console.error('The following required environment variables are missing or invalid:');
+    summary.results
+      .filter(r => r.isRequired && !r.isValid)
+      .forEach(r => {
+        console.error(`  - ${r.name}: ${r.message}`);
+      });
   }
 };

@@ -48,7 +48,14 @@ process.on('SIGTERM', () => void shutdown('SIGTERM'));
     const maybeServer = await startApp();
     if (maybeServer) serverInstance = maybeServer;
   } catch (error) {
-    console.error("Error during application startup:", error);
-    process.exit(1);
+    // For validation errors, log just the message without stack trace
+    if (error instanceof Error && error.message.includes('FATAL:') && error.message.includes('required environment variable')) {
+      // Validation error - message already logged in validation.ts, just exit
+      process.exit(1);
+    } else {
+      // Other errors - log with full details
+      console.error("Error during application startup:", error);
+      process.exit(1);
+    }
   }
 })();

@@ -17,7 +17,6 @@ type Config = {
     allowedCORSOrigins: string[];
   };
   database: {
-    type: string;
     host: string;
     port: number;
     read_username: string;
@@ -52,7 +51,6 @@ export const config: Config = {
     allowedCORSOrigins: (process.env.API_ALLOWED_CORS_ORIGINS || '').split(',').map(origin => origin.trim()),
   },
   database: {
-    type: process.env.DB_TYPE || 'postgres',
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5999', 10),
     read_username: process.env.DB_READ_USERNAME || 'read',
