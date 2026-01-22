@@ -6,6 +6,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 import { AppDataSourceRead, AppDataSourceReadWrite } from "@mgmt-api/orm/db";
 import { startApp } from "./app";
+import { validateStartupRequirements } from "./lib/startup/validation";
 
 let serverInstance: import('http').Server | null = null;
 
@@ -37,6 +38,8 @@ process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
 (async () => {
   try {
+    validateStartupRequirements();
+
     console.log("Connecting to the management database");
     await AppDataSourceRead.initialize();
     await AppDataSourceReadWrite.initialize();

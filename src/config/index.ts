@@ -1,5 +1,6 @@
 type Config = {
   nodeEnv: string;
+  userAgent: string;
   log: {
     level: string;
   };
@@ -34,6 +35,7 @@ type Config = {
 
 export const config: Config = {
   nodeEnv: process.env.NODE_ENV || 'development',
+  userAgent: process.env.USER_AGENT || '',
   log: {
     level: process.env.LOG_LEVEL || 'info'
   },
