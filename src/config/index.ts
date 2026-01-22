@@ -33,35 +33,35 @@ type Config = {
 };
 
 export const config: Config = {
-  nodeEnv: process.env.NODE_ENV || 'development',
-  userAgent: process.env.USER_AGENT || '',
+  nodeEnv: process.env.NODE_ENV!,
+  userAgent: process.env.USER_AGENT!,
   log: {
-    level: process.env.LOG_LEVEL || 'info'
+    level: process.env.LOG_LEVEL!
   },
   auth: {
-    jwtSecret: process.env.AUTH_JWT_SECRET || '',
+    jwtSecret: process.env.AUTH_JWT_SECRET!,
   },
   api: {
-    port: parseInt(process.env.API_PORT || '1999', 10),
-    prefix: process.env.API_PREFIX || '/api',
-    version: process.env.API_VERSION || '/v2',
+    port: parseInt(process.env.API_PORT!, 10),
+    prefix: process.env.API_PREFIX!,
+    version: process.env.API_VERSION!,
     cookie: {
-      domain: process.env.COOKIE_DOMAIN || 'localhost'
+      domain: process.env.COOKIE_DOMAIN!
     },
-    allowedCORSOrigins: (process.env.API_ALLOWED_CORS_ORIGINS || '').split(',').map(origin => origin.trim()),
+    allowedCORSOrigins: process.env.API_ALLOWED_CORS_ORIGINS!.split(',').map(origin => origin.trim()),
   },
   database: {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5999', 10),
-    read_username: process.env.DB_READ_USERNAME || 'read',
-    read_password: process.env.DB_READ_PASSWORD || '',
-    read_write_username: process.env.DB_READ_WRITE_USERNAME || 'read_write',
-    read_write_password: process.env.DB_READ_WRITE_PASSWORD || '',
-    database: process.env.DB_DATABASE || 'postgres',
+    host: process.env.DB_HOST!,
+    port: parseInt(process.env.DB_PORT!, 10),
+    read_username: process.env.DB_READ_USERNAME!,
+    read_password: process.env.DB_READ_PASSWORD!,
+    read_write_username: process.env.DB_READ_WRITE_USERNAME!,
+    read_write_password: process.env.DB_READ_WRITE_PASSWORD!,
+    database: process.env.DB_DATABASE!,
     ssl_connection: process.env.DB_SSL_CONNECTION === 'true',
   },
   web: {
-    protocol: process.env.WEB_PROTOCOL || 'http',
-    domain: process.env.WEB_DOMAIN || 'localhost',
+    protocol: process.env.WEB_PROTOCOL!,
+    domain: process.env.WEB_DOMAIN!,
   },
 };
