@@ -41,7 +41,7 @@ const validateAllEnvironmentVariables = (): ValidationSummary => {
   results.push(validateRequired('DB_READ_WRITE_USERNAME', 'Database'));
   results.push(validateRequired('DB_READ_WRITE_PASSWORD', 'Database'));
   results.push(validateRequired('DB_DATABASE', 'Database'));
-  results.push(validateOptional('DB_SSL_CONNECTION', 'Database'));
+  results.push(validateOptional('DB_SSL_CONNECTION', 'Database', 'Use Default (false)'));
 
   // API Configuration
   results.push(validateRequired('API_PORT', 'API'));
@@ -63,7 +63,10 @@ const validateAllEnvironmentVariables = (): ValidationSummary => {
   const passed = results.filter(r => r.isValid && r.isSet).length;
   const failed = results.filter(r => !r.isValid).length;
   const requiredMissing = results.filter(r => r.isRequired && !r.isValid).length;
-  const skipped = results.filter(r => !r.isRequired && !r.isSet).length;
+  // Count as skipped only if not set and message is "Skipped" (exclude "Use Default" and "Blank")
+  const skipped = results.filter(r => !r.isRequired && !r.isSet && r.message === 'Skipped').length;
+  // Count defaults used (passed validations with "Use Default" or "Blank" messages)
+  const defaultsUsed = results.filter(r => r.isValid && r.isSet && (r.message.includes('Use Default') || r.message === 'Blank')).length;
 
   return {
     total,
@@ -71,6 +74,7 @@ const validateAllEnvironmentVariables = (): ValidationSummary => {
     failed,
     requiredMissing,
     skipped,
+    defaultsUsed,
     results
   };
 };
@@ -207,19 +211,23 @@ const displayValidationResults = (summary: ValidationSummary): void => {
   // Display summary
   console.log('=== Validation Summary ===');
   console.log(`Total: ${summary.total}`);
-  console.log(`Passed: ${summary.passed}`);
+  const passedText = summary.defaultsUsed > 0 
+    ? `Passed: ${summary.passed} (${summary.defaultsUsed} using defaults)`
+    : `Passed: ${summary.passed}`;
+  console.log(passedText);
   if (summary.skipped > 0) {
     console.warn(`Skipped: ${summary.skipped}`);
   }
   console.log(`Failed: ${summary.failed}`);
   console.log(`Required Missing: ${summary.requiredMissing}`);
   
-  if (summary.requiredMissing > 0) {
-    console.error('The following required environment variables are missing or invalid:');
+  if (summary.failed > 0) {
+    console.error('The following environment variables failed validation:');
     summary.results
-      .filter(r => r.isRequired && !r.isValid)
+      .filter(r => !r.isValid)
       .forEach(r => {
-        console.error(`  - ${r.name}: ${r.message}`);
+        const requiredText = r.isRequired ? ' (required)' : ' (optional)';
+        console.error(`  - ${r.name}${requiredText}: ${r.message}`);
       });
   }
 };
